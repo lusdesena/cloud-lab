@@ -1,0 +1,65 @@
+variable "vm_name" {
+  type        = string
+  description = "VM name"
+  validation {
+    condition     = !startswith(var.vm_name, "tf-")
+    error_message = "Don't include the prefix 'tf-' in the VM name. It will be added automatically."
+  }
+}
+variable "vmtag" {
+  type        = string
+  description = "VM tag"
+  default     = "tf"
+  validation {
+    condition     = var.vmtag == "tf"
+    error_message = "VM tag must be 'tf'"
+  }
+}
+variable "vm_id" {
+  type        = number
+  description = "VM ID"
+  validation {
+    condition     = var.vm_id >= 300 && var.vm_id <= 309 && var.vm_id == floor(var.vm_id)
+    error_message = "VM_ID must be between 300 and 309 and without decimals"
+  }
+}
+variable "cores" {
+  type        = number
+  default     = 1
+  description = "VM cores"
+  validation {
+    condition     = var.cores == floor(var.cores)
+    error_message = "Insert integer value for cores"
+  }
+}
+variable "memory_mb" {
+  type        = number
+  default     = 2048
+  description = "VM memory in MB"
+  validation {
+    condition     = var.memory_mb >= 1024
+    error_message = "Memory in MB must be equal to or greater than 1024"
+  }
+}
+variable "disk_gb" {
+  type        = number
+  default     = 20
+  description = "VM disk size in GB"
+}
+variable "ip_address" {
+  type        = string
+  description = "IPv4 of the VM without subnet mask. The /24 is added in a local."
+  validation {
+    condition     = can(regex("^192\\.0\\.2\\.(15[0-9])$", var.ip_address))
+    error_message = "The allowed IP address range is from 192.0.2.150 to 192.0.2.159"
+  }
+}
+variable "gateway" {
+  type        = string
+  description = "IPv4 gateway of the VM"
+  default     = "192.0.2.1"
+}
+variable "ssh_public_key_paths" {
+  type        = list(string)
+  description = "Paths to the SSH public keys"
+}

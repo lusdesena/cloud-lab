@@ -1,0 +1,11 @@
+#Copy to terraform.tfvars and edit the values as needed. Do not include the prefix 'tf-' in the vm_name variable, it will be added automatically.
+#strings
+vm_name    = "test-example"
+ip_address = "192.0.2.152"
+
+#numbers 
+vm_id = 304
+
+#lists
+
+ssh_public_key_paths = ["~/.ssh/id_ed25519.pub"]

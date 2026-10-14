@@ -1,22 +1,22 @@
-resource "proxmox_virtual_environment_vm" "tf_test_01" {
-  name      = "tf-test-01"
+resource "proxmox_virtual_environment_vm" "proxmox_vm" {
+  name      = local.vm_name
   node_name = "pve"
-  vm_id     = 300
+  vm_id     = var.vm_id
 
   agent {
     enabled = true
     timeout = "2m"
   }
   cpu {
-    cores = 1
+    cores = var.cores
   }
   memory {
-    dedicated = 2048
+    dedicated = var.memory_mb
   }
   disk {
     datastore_id = "local-zfs"
     interface    = "scsi0"
-    size         = 20
+    size         = var.disk_gb
   }
   network_device {
     model  = "virtio"
@@ -30,13 +30,13 @@ resource "proxmox_virtual_environment_vm" "tf_test_01" {
     datastore_id = "local-zfs"
     ip_config {
       ipv4 {
-        address = "192.0.2.150/24"
-        gateway = "192.0.2.1"
+        address = "${var.ip_address}${local.cidr_prefix}"
+        gateway = var.gateway
       }
     }
     user_account {
       username = "abel"
-      keys     = [trimspace(file(pathexpand("~/.ssh/id_ed25519.pub")))]
+      keys     = local.ssh_pub_keys
     }
   }
 }
