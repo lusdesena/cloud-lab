@@ -2,9 +2,11 @@
 #strings
 vm_name    = "test-example"
 ip_address = "192.0.2.152"
-
+node_name = "pve"
+node_ip = "192.0.2.100"
 #numbers 
 vm_id = 304
+username = "admin"
 
 #lists
 

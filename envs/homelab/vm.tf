@@ -27,16 +27,14 @@ resource "proxmox_virtual_environment_vm" "proxmox_vm" {
     datastore_id = "local-zfs"
   }
   initialization {
-    datastore_id = "local-zfs"
+    datastore_id      = "local-zfs"
+    user_data_file_id = module.cloud_init.cloud_config_id
+
     ip_config {
       ipv4 {
         address = "${var.ip_address}${local.cidr_prefix}"
         gateway = var.gateway
       }
-    }
-    user_account {
-      username = "abel"
-      keys     = local.ssh_pub_keys
     }
   }
 }

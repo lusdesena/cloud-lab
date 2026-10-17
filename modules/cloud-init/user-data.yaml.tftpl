@@ -1,0 +1,22 @@
+#cloud-config
+hostname: ${hostname}
+users:
+  - name: ${username}
+    groups: sudo
+    shell: /bin/bash
+    #No password only ssh key allowed, limited commands in a prod environment
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+%{ for k in ssh_authorized_keys ~}
+      - ${k}
+%{ endfor ~}
+
+package_update: true
+packages:
+%{ for j in packages ~}
+  - ${j}
+%{ endfor ~} 
+
+runcmd:
+  - systemctl enable --now nginx.service
+  - systemctl enable --now qemu-guest-agent

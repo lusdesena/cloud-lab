@@ -63,3 +63,24 @@ variable "ssh_public_key_paths" {
   type        = list(string)
   description = "Paths to the SSH public keys"
 }
+variable "node_ip" {
+  type        = string
+  description = "IP address of the Proxmox node"
+}
+variable "node_name" {
+  type        = string
+  description = "Name of the Proxmox node"
+}
+variable "packages" {
+  type        = list(string)
+  description = "List of packages to install on the VM"
+  default     = ["nginx", "qemu-guest-agent"]
+}
+variable "username" {
+  type        = string
+  description = "Username for the VM"
+  validation {
+    condition     = length(var.username) > 0 && var.username != "root"
+    error_message = "Username cannot be root or empty."
+  }
+}
