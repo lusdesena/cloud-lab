@@ -61,6 +61,10 @@ variable "gateway" {
   type        = string
   default     = "192.0.2.1"
   description = "IPv4 gateway. Only used when ip_address is set"
+  validation {
+    condition     = can(cidrhost("${var.gateway}/${var.prefix_length}", 0))
+    error_message = "This must be a valid gateway Example: 192.0.2.1"
+  }
 }
 variable "prefix_length" {
   type        = number

@@ -48,4 +48,20 @@ resource "proxmox_virtual_environment_vm" "vm" {
       }
     }
   }
+
+  lifecycle {
+    precondition {
+      condition     = var.ip_address == null || can(cidrhost("${var.ip_address}/${var.prefix_length}", 0))
+      error_message = "This must be a valid IPv4 address without mask. Example: 192.0.2.100"
+
+    }
+    precondition {
+      condition     = var.ip_address == null || can(cidrhost("${var.ip_address}/${var.prefix_length}", 0)) && cidrhost("${var.ip_address}/${var.prefix_length}", 0) == cidrhost("${var.gateway}/${var.prefix_length}", 0)
+      error_message = "ip_address ${var.ip_address}/${var.prefix_length} is not in the same subnet as gateway ${var.gateway}/${var.prefix_length}."
+    }
+    postcondition {
+      condition     = var.ip_address == null || contains(flatten(self.ipv4_addresses), var.ip_address)
+      error_message = "The IP address ${var.ip_address} is not in the list of IP addresses reported by the guest agent: ${join(", ", flatten(self.ipv4_addresses))}."
+    }
+  }
 }
