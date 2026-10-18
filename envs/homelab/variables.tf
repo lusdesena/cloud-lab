@@ -1,11 +1,3 @@
-variable "vm_name" {
-  type        = string
-  description = "VM name"
-  validation {
-    condition     = !startswith(var.vm_name, "tf-")
-    error_message = "Don't include the prefix 'tf-' in the VM name. It will be added automatically."
-  }
-}
 variable "vmtag" {
   type        = string
   description = "VM tag"
@@ -13,14 +5,6 @@ variable "vmtag" {
   validation {
     condition     = var.vmtag == "tf"
     error_message = "VM tag must be 'tf'"
-  }
-}
-variable "vm_id" {
-  type        = number
-  description = "VM ID"
-  validation {
-    condition     = var.vm_id >= 300 && var.vm_id <= 309 && var.vm_id == floor(var.vm_id)
-    error_message = "VM_ID must be between 300 and 309 and without decimals"
   }
 }
 variable "cores" {
@@ -45,14 +29,6 @@ variable "disk_gb" {
   type        = number
   default     = 20
   description = "VM disk size in GB"
-}
-variable "ip_address" {
-  type        = string
-  description = "IPv4 of the VM without subnet mask. The /24 is added in a local."
-  validation {
-    condition     = can(regex("^192\\.0\\.2\\.(15[0-9])$", var.ip_address))
-    error_message = "The allowed IP address range is from 192.0.2.150 to 192.0.2.159"
-  }
 }
 variable "gateway" {
   type        = string
@@ -82,5 +58,32 @@ variable "username" {
   validation {
     condition     = length(var.username) > 0 && var.username != "root"
     error_message = "Username cannot be root or empty."
+  }
+}
+variable "vms" {
+  type = map(object({
+    vm_id      = number
+    ip_address = string
+  }))
+  description = "VMs to create, keyed by name without the 'tf-' prefix (it is added automatically). ip_address is the IPv4 without subnet mask."
+  validation {
+    condition     = alltrue([for k, _ in var.vms : !startswith(k, "tf-")])
+    error_message = "Don't include the prefix 'tf-' in the VM name. It will be added automatically."
+  }
+  validation {
+    condition     = alltrue([for _, vm in var.vms : vm.vm_id >= 300 && vm.vm_id <= 309 && vm.vm_id == floor(vm.vm_id)])
+    error_message = "VM_ID must be between 300 and 309 and without decimals"
+  }
+  validation {
+    condition     = length(distinct([for _, vm in var.vms : vm.vm_id])) == length(var.vms)
+    error_message = "VM IDs must be unique"
+  }
+  validation {
+    condition     = alltrue([for _, vm in var.vms : can(regex("^192\\.0\\.2\\.(15[0-9])$", vm.ip_address))])
+    error_message = "The allowed IP address range is from 192.0.2.150 to 192.0.2.159"
+  }
+  validation {
+    condition     = length(distinct([for _, vm in var.vms : vm.ip_address])) == length(var.vms)
+    error_message = "IP addresses must be unique"
   }
 }

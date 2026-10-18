@@ -1,13 +1,14 @@
-#Copy to terraform.tfvars and edit the values as needed. Do not include the prefix 'tf-' in the vm_name variable, it will be added automatically.
+#Copy to terraform.tfvars and edit the values as needed. Do not include the prefix 'tf-' in the keys of vms, it will be added automatically.
 #strings
-vm_name    = "test-example"
-ip_address = "192.0.2.152"
 node_name = "pve"
 node_ip = "192.0.2.100"
 #numbers 
-vm_id = 304
 username = "admin"
 
 #lists
 
 ssh_public_key_paths = ["~/.ssh/id_ed25519.pub"]
+
+vms = {
+  "test-example" = { vm_id = 304, ip_address = "192.0.2.152" }
+}

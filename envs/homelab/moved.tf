@@ -7,3 +7,8 @@ moved {
   from = module.cloud_init.proxmox_virtual_environment_file.cloud_config
   to   = module.vm.proxmox_virtual_environment_file.cloud_config
 }
+
+moved {
+  from = module.vm
+  to   = module.vm["test-03"]
+}
