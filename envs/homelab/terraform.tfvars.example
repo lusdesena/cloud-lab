@@ -11,4 +11,5 @@ ssh_public_key_paths = ["~/.ssh/id_ed25519.pub"]
 
 vms = {
   "test-example" = { vm_id = 304, ip_address = "192.0.2.152" }
+  "test-example1" = {vm_id = 303, ip_address = "192.0.2.151" }
 }
