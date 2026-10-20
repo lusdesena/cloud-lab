@@ -1,14 +1,14 @@
 terraform {
-  required_version = ">= 1.11"
+  required_version = "~> 1.16"
 
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.116.0"
+      version = "~> 0.116.0"
     }
     http = {
       source  = "hashicorp/http"
-      version = "3.4.0"
+      version = "~> 3.4"
     }
   }
   backend "s3" {
