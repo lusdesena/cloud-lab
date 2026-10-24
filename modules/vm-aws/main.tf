@@ -13,6 +13,9 @@ data "aws_ami" "debian" {
 
   owners = ["136693071363"]
 }
+data "aws_subnet" "target" {
+  id = var.subnet_id
+}
 
 resource "aws_instance" "vm" {
   tags = {
@@ -33,5 +36,15 @@ resource "aws_instance" "vm" {
   root_block_device {
     volume_size = var.disk_gb
     encrypted   = true
+  }
+  lifecycle {
+    precondition {
+      condition     = var.ip_address == null || (cidrhost("${var.ip_address}/${split("/", data.aws_subnet.target.cidr_block)[1]}", 0) == cidrhost(data.aws_subnet.target.cidr_block, 0))
+      error_message = "ip address must belong to the subnet CIDR (${data.aws_subnet.target.cidr_block})."
+    }
+    precondition {
+      condition     = var.ip_address == null || (tonumber(split(".", var.ip_address)[3]) > 3 && var.ip_address != cidrhost(data.aws_subnet.target.cidr_block, -1))
+      error_message = "ip address cannot be of the AWS reserved adresses first four and last of the subnet"
+    }
   }
 }
