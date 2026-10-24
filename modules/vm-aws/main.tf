@@ -26,6 +26,7 @@ resource "aws_instance" "vm" {
   user_data_replace_on_change = true
   vpc_security_group_ids      = var.security_group_ids
   iam_instance_profile        = aws_iam_instance_profile.ssm_profile.name
+  associate_public_ip_address = false
   metadata_options {
     http_tokens = "required"
   }
