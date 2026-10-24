@@ -11,8 +11,6 @@ núcleo y añaden por encima lo propio de cada provider. Un env por provider (`e
 | Variable | Tipo | Obligatoria | Descripción |
 |---|---|---|---|
 | `name` | `string` | sí | Nombre de la VM |
-| `cpu` | `number` | sí | vCPU |
-| `memory` | `number` | sí | Memoria en MB |
 | `disk_gb` | `number` | sí | Disco raíz en GB |
 | `user_data` | `string` | sí | **Contenido** cloud-config renderizado (no un ID) |
 | `ip_address` | `string` | no (`null`) | IP privada fija. `null` = la asigna el entorno (DHCP / subred) |
@@ -28,8 +26,15 @@ núcleo y añaden por encima lo propio de cada provider. Un env por provider (`e
 
 | Módulo | Variables propias |
 |---|---|
-| `vm-proxmox` | `node_name`, `datastore_id`, `bridge`, `template_vm_id`, `gateway` (todas con default) · `vm_id` |
-| `vm-aws` | `key_name` (si se usa clave de EC2; en Proxmox las claves viajan dentro de `user_data`), `subnet_id`, `security_group_ids`, `instance_type`, `ami_id`, instance profile |
+| `vm-proxmox` | `node_name`, `cpu`, `memory`, `datastore_id`, `bridge`, `template_vm_id`, `gateway` (todas con default) · `vm_id` |
+| `vm-aws` | `subnet_id`, `security_group_ids`, `instance_type` (obligatoria, sin default por coste), `ami_name_pattern` (default: build de Debian 13 fijada) |
+
+Notas de `vm-aws`:
+
+- **Sin `key_name`**: el acceso es solo por SSM, sin SSH. Las claves de `cloud-init` no se usan para entrar.
+- **Sin `ami_id`**: la AMI se resuelve dentro del módulo con `data "aws_ami"` a partir de `ami_name_pattern`. Fijar la build en el patrón evita reemplazos de la instancia por AMIs nuevas; actualizar es un cambio de código revisable.
+- **Sin `instance_profile`**: lo crea el módulo (rol IAM con `AmazonSSMManagedInstanceCore` + instance profile), porque SSM es el único acceso.
+- `cpu` y `memory` no existen en AWS: el dimensionado es `instance_type`.
 
 ## `cloud-init`
 
@@ -45,5 +50,5 @@ ningún provider.
 - [x] `cloud-init` solo renderiza y devuelve `user_data`; el snippet vive en `vm-proxmox`.
 - [x] Quitado `required_providers` de Proxmox en `cloud-init`.
 - [x] VM y snippet movidos a `vm-proxmox` con bloques `moved` (`moved.tf`); `plan` = 0 to destroy.
-- [ ] `terraform apply -var username=abel` para escribir las nuevas direcciones en el state.
-- [ ] `for_each` sobre un `map` para `tf-web-01` y `tf-web-02`.
+- [x] `terraform apply -var username=abel` para escribir las nuevas direcciones en el state.
+- [x] `for_each` sobre un `map` para `tf-web-01` y `tf-web-02`.

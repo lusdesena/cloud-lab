@@ -14,11 +14,15 @@ output "nat_public_ip" {
   value       = module.network.nat_public_ip
   description = "NAT public IP"
 }
-output "public_ids" {
+output "public_subnets_ids" {
   value       = module.network.public_subnets_ids
   description = "Public subnets IDs"
 }
-output "private_ids" {
+output "private_subnets_ids" {
   value       = module.network.private_subnets_ids
   description = "Private subnets IDs"
+}
+output "instance_id" {
+  value       = module.vm.id
+  description = "EC2 instance id (for aws ssm start-session)"
 }

@@ -3,16 +3,6 @@ variable "name" {
   type        = string
   description = "VM name"
 }
-variable "cpu" {
-  type        = number
-  default     = 1
-  description = "VM cores"
-}
-variable "memory" {
-  type        = number
-  default     = 2048
-  description = "VM memory in MB"
-}
 variable "disk_gb" {
   type        = number
   default     = 20
@@ -36,6 +26,16 @@ variable "vm_id" {
 variable "node_name" {
   type        = string
   description = "Name of the Proxmox node"
+}
+variable "cpu" {
+  type        = number
+  default     = 1
+  description = "VM cores"
+}
+variable "memory" {
+  type        = number
+  default     = 2048
+  description = "VM memory in MB"
 }
 variable "datastore_id" {
   type        = string

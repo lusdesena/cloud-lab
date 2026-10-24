@@ -87,3 +87,8 @@ variable "vms" {
     error_message = "IP addresses must be unique"
   }
 }
+variable "extra_runcmd" {
+  type        = list(string)
+  default     = ["systemctl enable --now qemu-guest-agent"]
+  description = "extra commands executed depending on the env"
+}

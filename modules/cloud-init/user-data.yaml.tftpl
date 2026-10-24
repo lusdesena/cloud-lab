@@ -6,17 +6,21 @@ users:
     shell: /bin/bash
     #No password only ssh key allowed, limited commands in a prod environment
     sudo: ALL=(ALL) NOPASSWD:ALL
+%{ if length(ssh_authorized_keys) > 0 ~}
     ssh_authorized_keys:
 %{ for k in ssh_authorized_keys ~}
       - ${k}
 %{ endfor ~}
+%{ endif ~}
 
 package_update: true
 packages:
 %{ for j in packages ~}
   - ${j}
-%{ endfor ~} 
+%{ endfor ~}
 
 runcmd:
   - systemctl enable --now nginx.service
-  - systemctl enable --now qemu-guest-agent
+%{ for k in extra_runcmd ~}
+  - ${k}
+%{ endfor ~}

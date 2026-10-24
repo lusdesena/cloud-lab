@@ -6,4 +6,5 @@ module "cloud_init" {
   packages            = var.packages
   ssh_authorized_keys = local.ssh_pub_keys
   hostname            = local.vm_names[each.key]
+  extra_runcmd        = var.extra_runcmd
 }

@@ -4,5 +4,6 @@ locals {
     packages            = var.packages
     ssh_authorized_keys = var.ssh_authorized_keys
     hostname            = var.hostname
+    extra_runcmd        = var.extra_runcmd
   })
 }
