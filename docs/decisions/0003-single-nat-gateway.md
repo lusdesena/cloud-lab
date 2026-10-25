@@ -28,7 +28,8 @@ stay applied because they are free.
 
 Positive:
 
-- Cost is a third of a per-AZ NAT, and it is only paid during sessions.
+- Cost is half of a per-AZ NAT (two AZs), and it is only paid during
+  sessions.
 - One route table and one NAT keep the module simple.
 
 Negative / risks:
