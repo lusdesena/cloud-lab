@@ -26,3 +26,7 @@ output "instance_id" {
   value       = module.vm.id
   description = "EC2 instance id (for aws ssm start-session)"
 }
+output "alb_dns_name" {
+  value       = aws_lb.web.dns_name
+  description = "ALB dns_name attribute"
+}
