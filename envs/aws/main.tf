@@ -94,6 +94,7 @@ module "cloud_init" {
   hostname = "${var.name}-web"
   packages = ["nginx", "wget"]
   extra_runcmd = [
+    "systemctl enable --now nginx.service",
     "wget -O /tmp/amazon-ssm-agent.deb https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb",
     "dpkg -i /tmp/amazon-ssm-agent.deb",
     "systemctl enable --now amazon-ssm-agent"

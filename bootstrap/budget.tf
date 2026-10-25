@@ -5,12 +5,12 @@ resource "aws_budgets_budget" "monthly" {
   limit_amount      = "20.0"
   limit_unit        = "USD"
   time_period_start = "2026-10-01_00:00"
-  metrics = ["UnblendedCost"]
-  billing_view_arn = "arn:aws:billing::${data.aws_caller_identity.current.account_id}:billingview/primary"
+  metrics           = ["UnblendedCost"]
+  billing_view_arn  = "arn:aws:billing::${data.aws_caller_identity.current.account_id}:billingview/primary"
 
   filter_expression {
     dimensions {
-      key = "RECORD_TYPE"
+      key    = "RECORD_TYPE"
       values = ["Other", "Upfront", "Support", "Recurring", "Usage", "Tax"]
     }
   }

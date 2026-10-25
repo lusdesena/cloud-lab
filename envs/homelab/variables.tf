@@ -89,6 +89,6 @@ variable "vms" {
 }
 variable "extra_runcmd" {
   type        = list(string)
-  default     = ["systemctl enable --now qemu-guest-agent"]
+  default     = ["systemctl enable --now nginx.service", "systemctl enable --now qemu-guest-agent"]
   description = "extra commands executed depending on the env"
 }
