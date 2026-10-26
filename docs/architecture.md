@@ -47,8 +47,10 @@ Each root has its own `versions.tf`, `providers.tf` and lockfile, so the three c
 
 ## Homelab environment
 
-- **Provider**: `bpg/proxmox`. It talks to the Proxmox API and uses SSH (a dedicated user without sudo) only
-  to upload cloud-config snippets.
+- **Provider**: `bpg/proxmox`. It authenticates to the Proxmox API with a token tied to a custom role. The
+  token and the endpoint come from `PROXMOX_VE_*` environment variables, so nothing sensitive is in the code.
+  SSH is used only to upload cloud-config snippets, through the SSH agent and as a dedicated Linux user with
+  no sudo and write access to the snippets directory only.
 - **VMs**: `vm-proxmox` clones a Debian cloud-init template. The user data is rendered once by `cloud-init`,
   uploaded as a snippet and attached to the VM. The QEMU guest agent reports the IP back to Terraform.
 - **Many VMs, one block**: `for_each` over a map of VMs. Names, IDs and IPs are validated by `validation`,
