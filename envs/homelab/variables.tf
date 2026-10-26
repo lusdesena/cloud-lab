@@ -33,7 +33,6 @@ variable "disk_gb" {
 variable "gateway" {
   type        = string
   description = "IPv4 gateway of the VM"
-  default     = "192.0.2.1"
 }
 variable "ssh_public_key_paths" {
   type        = list(string)
@@ -79,7 +78,8 @@ variable "vms" {
     error_message = "VM IDs must be unique"
   }
   validation {
-    condition     = alltrue([for _, vm in var.vms : can(regex("^192\\.0\\.2\\.(15[0-9])$", vm.ip_address))])
+    condition = alltrue([for _, vm in var.vms : can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+\\.(15[0-9])$",
+    vm.ip_address))])
     error_message = "The allowed IP address range is from 192.0.2.150 to 192.0.2.159"
   }
   validation {

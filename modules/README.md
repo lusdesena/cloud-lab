@@ -1,54 +1,48 @@
-# Módulos
+# Modules
 
-Contrato **común y blando** para los módulos de VM: `vm-proxmox` y `vm-aws` (S10) cumplen el mismo
-núcleo y añaden por encima lo propio de cada provider. Un env por provider (`envs/homelab`,
-`envs/aws`); el user-data se renderiza una sola vez en `cloud-init` y se reutiliza.
+A **common, soft contract** for the VM modules: `vm-proxmox` and `vm-aws` meet the same core and add
+whatever is specific to each provider on top. There is one environment per provider (`envs/homelab`,
+`envs/aws`), and the user data is rendered once in `cloud-init` and reused.
 
-## Contrato común de VM
+## Common VM contract
 
 ### Inputs
 
-| Variable | Tipo | Obligatoria | Descripción |
+| Variable | Type | Required | Description |
 |---|---|---|---|
-| `name` | `string` | sí | Nombre de la VM |
-| `disk_gb` | `number` | sí | Disco raíz en GB |
-| `user_data` | `string` | sí | **Contenido** cloud-config renderizado (no un ID) |
-| `ip_address` | `string` | no (`null`) | IP privada fija. `null` = la asigna el entorno (DHCP / subred) |
+| `name` | `string` | yes | VM name |
+| `disk_gb` | `number` | no (default per module: 20 on `vm-proxmox`, 8 on `vm-aws`) | Root disk size in GB |
+| `user_data` | `string` | yes | Rendered cloud-config **content** (not an ID) |
+| `ip_address` | `string` | no (`null`) | Fixed private IP. `null` = assigned by the environment (DHCP / subnet) |
 
 ### Outputs
 
-| Output | Tipo | Descripción |
+| Output | Type | Description |
 |---|---|---|
-| `id` | `string` | Identificador de la VM en el provider (VMID / instance id) |
-| `ip` | `string` | IP real de la VM, se haya fijado o no |
+| `id` | `string` | VM identifier in the provider (VM ID / instance ID) |
+| `ip` | `string` | The VM's actual IP, whether it was fixed or not |
 
-## Específico de cada provider (fuera del contrato)
+## Provider-specific (outside the contract)
 
-| Módulo | Variables propias |
+| Module | Own variables |
 |---|---|
-| `vm-proxmox` | `node_name`, `cpu`, `memory`, `datastore_id`, `bridge`, `template_vm_id`, `gateway` (todas con default) · `vm_id` |
-| `vm-aws` | `subnet_id`, `security_group_ids`, `instance_type` (obligatoria, sin default por coste), `ami_name_pattern` (default: build de Debian 13 fijada) |
+| `vm-proxmox` | `node_name`, `cpu`, `memory`, `datastore_id`, `snippets_datastore_id`, `bridge`, `template_vm_id`, `gateway`, `prefix_length` (all with a default) · `vm_id` (required) |
+| `vm-aws` | `subnet_id`, `security_group_ids`, `instance_type` (required, no default because it drives the cost), `ami_name_pattern` (default: a pinned Debian 13 build) |
 
-Notas de `vm-aws`:
+Notes on `vm-aws`:
 
-- **Sin `key_name`**: el acceso es solo por SSM, sin SSH. Las claves de `cloud-init` no se usan para entrar.
-- **Sin `ami_id`**: la AMI se resuelve dentro del módulo con `data "aws_ami"` a partir de `ami_name_pattern`. Fijar la build en el patrón evita reemplazos de la instancia por AMIs nuevas; actualizar es un cambio de código revisable.
-- **Sin `instance_profile`**: lo crea el módulo (rol IAM con `AmazonSSMManagedInstanceCore` + instance profile), porque SSM es el único acceso.
-- `cpu` y `memory` no existen en AWS: el dimensionado es `instance_type`.
+- **No `key_name`**: access is through SSM only, with no SSH. The SSH keys passed to `cloud-init` are not used to log in.
+- **No `ami_id`**: the AMI is resolved inside the module with `data "aws_ami"` from `ami_name_pattern`. Pinning the build in the pattern avoids replacing the instance when newer AMIs appear; updating it is a reviewable code change.
+- **No `instance_profile`**: the module creates it (an IAM role with `AmazonSSMManagedInstanceCore` plus an instance profile), because SSM is the only way in.
+- `cpu` and `memory` do not exist on AWS: sizing is `instance_type`.
 
 ## `cloud-init`
 
-Solo renderiza: recibe usuario, claves y paquetes y devuelve el **texto** cloud-config. No conoce
-ningún provider.
+It only renders: it takes a user, keys and packages and returns the cloud-config **text**. It knows nothing
+about any provider.
 
-- `vm-aws` lo pasa tal cual al campo `user_data` de la instancia.
-- `vm-proxmox` lo sube como snippet (`proxmox_virtual_environment_file`) y referencia su ID en
+- `vm-aws` passes it as-is to the instance's `user_data`.
+- `vm-proxmox` uploads it as a snippet (`proxmox_virtual_environment_file`) and references its ID in
   `initialization.user_data_file_id`.
 
-## Deuda de S5
-
-- [x] `cloud-init` solo renderiza y devuelve `user_data`; el snippet vive en `vm-proxmox`.
-- [x] Quitado `required_providers` de Proxmox en `cloud-init`.
-- [x] VM y snippet movidos a `vm-proxmox` con bloques `moved` (`moved.tf`); `plan` = 0 to destroy.
-- [x] `terraform apply -var username=abel` para escribir las nuevas direcciones en el state.
-- [x] `for_each` sobre un `map` para `tf-web-01` y `tf-web-02`.
+Each module has its own README with the full list of inputs and outputs.
