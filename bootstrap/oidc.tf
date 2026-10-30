@@ -21,7 +21,7 @@ data "aws_iam_policy_document" "plan_trust" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:lusdesena/cloud-lab:pull_request"]
+      values   = ["repo:lusdesena@48432843/cloud-lab@1434101942:pull_request"]
     }
   }
 }

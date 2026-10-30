@@ -1,5 +1,7 @@
 name: OIDC test
 on:
+  push:
+    branches: [test/oidc]
   pull_request:
     branches: [main]
 
