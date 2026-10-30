@@ -25,8 +25,17 @@ Both trust policies use `StringEquals` on `aud` and on `sub`, never
 
 | Role | `sub` | Session |
 |---|---|---|
-| `github-actions-plan` | `repo:lusdesena/cloud-lab:pull_request` | 1 h |
-| `github-actions-apply` | `repo:lusdesena/cloud-lab:environment:aws` | 2 h |
+| `github-actions-plan` | `repo:lusdesena@48432843/cloud-lab@1434101942:pull_request` | 1 h |
+| `github-actions-apply` | `repo:lusdesena@48432843/cloud-lab@1434101942:environment:aws` | 2 h |
+
+The repository uses GitHub's immutable subject: the `sub` claim carries
+the numeric IDs of the owner and the repository, not only their names
+(`sub_claim_prefix` in `repos/lusdesena/cloud-lab/actions/oidc/customization/sub`).
+The name-only form `repo:lusdesena/cloud-lab:...` is therefore never
+presented and a trust policy written with it rejects every token. The
+IDs also mean that a repository deleted and recreated under the same
+name, or an account name taken by someone else after a rename, produces a
+different `sub` and cannot assume the roles.
 
 A job that declares `environment: aws` always emits the environment form
 of `sub`, not the branch form. That is why `apply` is bound to the
@@ -60,6 +69,9 @@ Positive:
   environment with manual approval.
 - Forks cannot assume either role: their `sub` would not match, and
   GitHub does not grant `id-token` to runs from forks.
+- The trust policies are tied to the owner and repository IDs, not only
+  to their names. A repository recreated under the same name cannot
+  assume the roles, which is the intended behaviour.
 
 Negative / risks:
 
@@ -72,5 +84,22 @@ Negative / risks:
   of actions. A closed list is deferred: it will be derived from the
   `AccessDenied` errors of the first CI runs, or from CloudTrail with IAM
   Access Analyzer, and then replaced here.
-- Not tested: assuming the roles from a real workflow, refusal from a
-  non-matching `sub`, and the claim that forks get no `id-token`.
+- The IDs are public (GitHub API) and are written in `bootstrap/oidc.tf`.
+  The `sub` also contains the names, so renaming the repository or the
+  account, or recreating the repository, requires updating the values
+  by hand. The rename case has not been tested.
+- Verified on 2026-10-30: a `pull_request` run assumed
+  `github-actions-plan`, and a `push` run on the same commit was refused
+  with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. The
+  rejected `sub` was `...:ref:refs/heads/test/oidc`.
+- Not tested: the `apply` role and the `environment:aws` subject, and the
+  claim that forks get no `id-token`.
+
+## Notes
+
+The first version of this decision used the name-only `sub`
+(`repo:lusdesena/cloud-lab:pull_request`) and the run failed with
+`Not authorized to perform sts:AssumeRoleWithWebIdentity`. `terraform
+validate` cannot catch it: the condition key is a free string. The cause
+was found by decoding the claims of a real token in the runner, not by
+reading documentation.
