@@ -1,10 +1,20 @@
 resource "aws_vpc" "main" {
+  #checkov:skip=CKV2_AWS_11: VPC flow logs add CloudWatch/S3 cost and are not needed in a lab
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
     Name = "${var.name}-vpc"
+  }
+}
+
+# Close the default security group: nothing should depend on it
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.name}-default-sg-closed"
   }
 }
 resource "aws_subnet" "private" {

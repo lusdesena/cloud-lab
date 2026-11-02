@@ -23,6 +23,7 @@ resource "aws_security_group" "alb" {
 resource "aws_vpc_security_group_egress_rule" "egress_web" {
   for_each          = toset(["80", "443"])
   security_group_id = aws_security_group.apt_ssm.id
+  description       = "Outbound TCP ${each.value} to the internet (apt and SSM agent download)"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = tonumber(each.value)
@@ -30,36 +31,49 @@ resource "aws_vpc_security_group_egress_rule" "egress_web" {
 }
 resource "aws_vpc_security_group_egress_rule" "egress_alb" {
   security_group_id            = aws_security_group.alb.id
+  description                  = "ALB to the instances on TCP 80"
   referenced_security_group_id = aws_security_group.apt_ssm.id
   ip_protocol                  = "tcp"
   from_port                    = 80
   to_port                      = 80
 }
 resource "aws_vpc_security_group_ingress_rule" "ingress_alb" {
+  #checkov:skip=CKV_AWS_260: public HTTP listener by design; there is no domain or ACM certificate to serve HTTPS
   security_group_id = aws_security_group.alb.id
+  description       = "Public HTTP to the ALB"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 80
   to_port           = 80
 }
 resource "aws_vpc_security_group_ingress_rule" "ingress_aptssm" {
+  #checkov:skip=CKV_AWS_260: false positive, the source is the ALB security group (referenced_security_group_id), not 0.0.0.0/0
   security_group_id            = aws_security_group.apt_ssm.id
+  description                  = "Instances accept TCP 80 only from the ALB security group"
   referenced_security_group_id = aws_security_group.alb.id
   ip_protocol                  = "tcp"
   from_port                    = 80
   to_port                      = 80
 }
 resource "aws_lb" "web" {
+  #checkov:skip=CKV_AWS_150: lab environment destroyed from CI; deletion protection would block destroy
+  #checkov:skip=CKV_AWS_91: access logs need an extra S3 bucket and add nothing to the lab
+  #checkov:skip=CKV2_AWS_28: a WAF has a fixed monthly cost, not justified in a lab
+  #checkov:skip=CKV2_AWS_20: no HTTPS listener to redirect to, there is no domain or ACM certificate
   name               = "${var.name}-web-lb"
   load_balancer_type = "application"
   internal           = false
   subnets            = values(module.network.public_subnets_ids)
   security_groups    = [aws_security_group.alb.id]
+
+  drop_invalid_header_fields = true
+
   tags = {
     Name = "${var.name}-web-lb"
   }
 }
 resource "aws_lb_target_group" "web" {
+  #checkov:skip=CKV_AWS_378: ALB to instance traffic stays inside the private subnets; HTTPS needs a certificate the lab does not have
   name     = "${var.name}-web-tg"
   port     = 80
   protocol = "HTTP"
@@ -80,6 +94,8 @@ resource "aws_lb_target_group_attachment" "web" {
   port             = 80
 }
 resource "aws_lb_listener" "web" {
+  #checkov:skip=CKV_AWS_2: no domain or ACM certificate, so the listener is HTTP
+  #checkov:skip=CKV_AWS_103: no TLS listener, same reason as CKV_AWS_2
   load_balancer_arn = aws_lb.web.arn
   port              = 80
   protocol          = "HTTP"
