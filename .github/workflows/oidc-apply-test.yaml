@@ -1,0 +1,33 @@
+name: OIDC apply test
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  with-environment:
+    runs-on: ubuntu-latest
+    environment: aws
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::035074950804:role/github-actions-apply
+          aws-region: eu-north-1
+      - run: aws sts get-caller-identity
+
+  without-environment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::035074950804:role/github-actions-apply
+          aws-region: eu-north-1
+      - run: aws sts get-caller-identity
