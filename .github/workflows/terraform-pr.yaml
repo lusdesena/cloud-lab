@@ -1,0 +1,107 @@
+name: Terraform PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "envs/aws/**"
+      - "modules/**"
+      - ".tflint.hcl"
+      - ".github/workflows/terraform-pr.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e  # v4.0.1
+        with:
+          terraform_version: "^1.16.0"
+
+      - name: fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: validate
+        working-directory: envs/aws
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef  # v6.3.1
+        with:
+          tflint_version: v0.64.0
+
+      - name: tflint
+        env:
+          # tflint --init downloads the plugin from GitHub releases
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint --chdir=envs/aws --format=compact
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: install checkov
+        run: pip install --no-cache-dir "checkov==3.3.29"
+
+      # Gate: every skip is justified next to its resource (#checkov:skip=...)
+      - name: checkov
+        run: |
+          checkov --directory envs/aws --framework terraform --compact
+
+  plan:
+    needs: static
+    # Forks get no id-token and no AWS role: skip instead of failing
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    # One run at a time on the state; never cancel one midway (stale .tflock)
+    concurrency:
+      group: terraform-envs-aws
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e  # v4.0.1
+        with:
+          terraform_version: "^1.16.0"
+          # The wrapper hides the exit code and mixes the output; not needed here
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::035074950804:role/github-actions-plan
+          aws-region: eu-north-1
+
+      - name: init
+        working-directory: envs/aws
+        run: terraform init -input=false
+
+      - name: plan
+        working-directory: envs/aws
+        run: |
+          set -o pipefail
+          terraform plan -input=false -no-color -lock-timeout=60s | tee "$RUNNER_TEMP/plan.txt"
+
+      - name: plan to job summary
+        if: always()
+        run: |
+          {
+            echo '## terraform plan · envs/aws'
+            echo '```'
+            tail -c 60000 "$RUNNER_TEMP/plan.txt" 2>/dev/null || echo 'no plan output'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

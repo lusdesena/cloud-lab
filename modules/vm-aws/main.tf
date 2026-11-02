@@ -18,6 +18,7 @@ data "aws_subnet" "target" {
 }
 
 resource "aws_instance" "vm" {
+  #checkov:skip=CKV_AWS_126: detailed monitoring is billed per instance and is not needed in a lab
   tags = {
     Name = var.name
   }
@@ -30,6 +31,7 @@ resource "aws_instance" "vm" {
   vpc_security_group_ids      = var.security_group_ids
   iam_instance_profile        = aws_iam_instance_profile.ssm_profile.name
   associate_public_ip_address = false
+  ebs_optimized               = true
   metadata_options {
     http_tokens = "required"
   }
