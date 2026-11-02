@@ -1,0 +1,44 @@
+name: Terraform PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "envs/aws/**"
+      - "modules/**"
+      - ".tflint.hcl"
+      - ".github/workflows/terraform-pr.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e  # v4.0.1
+        with:
+          terraform_version: "^1.16.0"
+
+      - name: fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: validate
+        working-directory: envs/aws
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef  # v6.3.1
+        with:
+          tflint_version: v0.64.0
+
+      - name: tflint
+        env:
+          # tflint --init downloads the plugin from GitHub releases
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint --chdir=envs/aws --format=compact
