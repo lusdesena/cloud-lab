@@ -92,8 +92,13 @@ Negative / risks:
   `github-actions-plan`, and a `push` run on the same commit was refused
   with `Not authorized to perform sts:AssumeRoleWithWebIdentity`. The
   rejected `sub` was `...:ref:refs/heads/test/oidc`.
-- Not tested: the `apply` role and the `environment:aws` subject, and the
-  claim that forks get no `id-token`.
+- Verified on 2026-11-02, from a pull request: a job declaring
+  `environment: aws` waited for the manual approval and then assumed
+  `github-actions-apply`; a job without environment, in the same run, was
+  refused with `Not authorized to perform sts:AssumeRoleWithWebIdentity`
+  (its `sub` was the `pull_request` form). The Environment is restricted
+  to `main`, so `apply` can only run from that branch.
+- Not tested: the claim that forks get no `id-token`.
 
 ## Notes
 
@@ -103,3 +108,7 @@ The first version of this decision used the name-only `sub`
 validate` cannot catch it: the condition key is a free string. The cause
 was found by decoding the claims of a real token in the runner, not by
 reading documentation.
+
+The `apply` permissions are still described by service. The closed list
+of actions will come from the `AccessDenied` errors of the first
+Terraform workflow runs (S20).
