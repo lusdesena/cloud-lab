@@ -1,0 +1,41 @@
+name: Infracost
+
+# Cost estimate of a PR as a comment. Reads the HCL: needs no AWS role.
+on:
+  pull_request:
+    types: [opened, synchronize, closed, reopened]
+    branches: [main]
+    paths:
+      - "envs/aws/**"
+      - "modules/**"
+      - ".github/workflows/infracost.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  infracost:
+    # Forks get no secrets: skip instead of failing
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Checkouts are skipped on closed PRs: nothing to diff
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        if: github.event.action != 'closed'
+        with:
+          path: head
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        if: github.event.action != 'closed'
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: base
+
+      - uses: infracost/actions/diff@a5783eb98adc93aa7a0049fce0abb06fdd30770a  # v5.0.1
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          base-path: base
+          head-path: head
