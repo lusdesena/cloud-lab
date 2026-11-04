@@ -123,7 +123,7 @@ module "vm" {
   user_data          = module.cloud_init.user_data
   subnet_id          = module.network.private_subnets_ids["private-0"]
   security_group_ids = [aws_security_group.apt_ssm.id]
-  instance_type      = "t3.micro"
+  instance_type      = "t3.medium"
 
   depends_on = [module.network]
 }
